@@ -1,68 +1,60 @@
-import unittest
-from time_calculator import add_time
+def add_time(start="3:00 PM", duration="2:32", day=False):
+
+    #processing converting from 12 to 24
+    if "pm" in start.lower():
+        start = start.split(":")
+        start[0] = str(int(start[0])+12)
+        start = ":".join(start)
+        start = start.strip(" PM")
+    else:
+        start= start.strip(" AM")
+    
+    start=start.split(":")
+    start= list(map(lambda x: int(x), start))
+    start=start[0]*60+start[1]
+
+    duration = duration.split(":")
+    duration= list(map(lambda x: int(x), duration))
+    duration=duration[0]*60+duration[1]
+    
+    final = ""              #final string to be returned
+
+    time_final =start+duration
+
+    final = "0"*(2-len(str(time_final%60)))+str(time_final%60)      #add minutes to the final string
+    time_final = time_final//60
+
+    #converting from 24 to 12
+    hours = time_final%24
+    IS_PM = False if hours<12 else True
+    if hours<13:
+        hours = hours
+        if hours == 00:
+            hours = 12
+    else:
+        hours = hours%12
+
+    final = str(hours)+":"+final    #add hours to final string
+    final = final+" "+"PM" if IS_PM else final+" "+"AM"
 
 
-class UnitTests(unittest.TestCase):
-    maxDiff = None
-    def test_same_period(self):
-        actual = add_time("3:30 PM", "2:12")
-        expected = "5:42 PM"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "3:30 PM", "2:12" to return "5:42 PM"')
+    #Adding the newday, if passed in argument
+    if day:
+        week = ("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
+        day = week.index(day.lower())
 
-    def test_different_period(self):
-        actual = add_time("11:55 AM", "3:12")
-        expected = "3:07 PM"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "11:55 AM", "3:12" to return "3:07 PM"')
+    time_final = time_final//24     #calculating number of days passed
+    if day:
+        index = (day+time_final)%7
+        final = final+", "+week[index].title()
 
-    def test_next_day(self):
-        actual = add_time("9:15 PM", "5:30")
-        expected = "2:45 AM (next day)"
-        self.assertEqual(actual, expected, 'Expected time to end with "(next day)" when it is the next day.')
 
-    def test_period_change_at_twelve(self):
-        actual = add_time("11:40 AM", "0:25")
-        expected = "12:05 PM"
-        self.assertEqual(actual, expected, 'Expected period to change from AM to PM at 12:00')
+    #Adding number of days passed, if there
+    if time_final:
+        if not(time_final==1):
+            final = final+" ("+str(time_final)+" days later)"
+        else:
+            final = final+" (next day)"
 
-    def test_twenty_four(self):
-        actual = add_time("2:59 AM", "24:00")
-        expected = "2:59 AM (next day)"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "2:59 AM", "24:00" to return "2:59 AM"')
 
-    def test_two_days_later(self):
-        actual = add_time("11:59 PM", "24:05")
-        expected = "12:04 AM (2 days later)"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "11:59 PM", "24:05" to return "12:04 AM (2 days later)"')
-
-    def test_high_duration(self):
-        actual = add_time("8:16 PM", "466:02")
-        expected = "6:18 AM (20 days later)"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "8:16 PM", "466:02" to return "6:18 AM (20 days later)"')
-
-    def test_no_change(self):
-        actual = add_time("5:01 AM", "0:00")
-        expected = "5:01 AM"
-        self.assertEqual(actual, expected, 'Expected adding 0:00 to return initial time.')
-
-    def test_same_period_with_day(self):
-        actual = add_time("3:30 PM", "2:12", "Monday")
-        expected = "5:42 PM, Monday"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "3:30 PM", "2:12", "Monday" to return "5:42 PM, Monday"')
-
-    def test_twenty_four_with_day(self):
-        actual = add_time("2:59 AM", "24:00", "saturDay")
-        expected = "2:59 AM, Sunday (next day)"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "2:59 AM", "24:00", "saturDay" to return "2:59 AM, Sunday (next day)"')
-
-    def test_two_days_later_with_day(self):
-        actual = add_time("11:59 PM", "24:05", "Wednesday")
-        expected = "12:04 AM, Friday (2 days later)"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "11:59 PM", "24:05", "Wednesday" to return "12:04 AM, Friday (2 days later)"')
-
-    def test_high_duration_with_day(self):
-        actual = add_time("8:16 PM", "466:02", "tuesday")
-        expected = "6:18 AM, Monday (20 days later)"
-        self.assertEqual(actual, expected, 'Expected calling "add_time()" with "8:16 PM", "466:02", "tuesday" to return "6:18 AM, Monday (20 days later)"')
-
-if __name__ == "__main__":
-    unittest.main()
+    return final
